@@ -1,0 +1,122 @@
+
+
+<script lang="ts" setup>
+  import { nextTick, ref } from 'vue';
+  import { add, getById, update } from '@/api/agi/app';
+  import { UploadCustomRequestOptions, useMessage } from 'naive-ui';
+  import { formSchemas } from './columns';
+  import { BasicForm, useForm } from '@/components/Form';
+  import { basicModal, useModal } from '@/components/Modal';
+  import { isNullOrWhitespace } from '@/utils/is';
+  import { uploadApi } from '@/api/agi/oss';
+  import ModelSelect from '@/views/common/ModelSelect.vue';
+  import { useAppStore } from '@/views/app/store';
+  import { useChatStore } from '@/views/chat/store/useChatStore';
+
+  const appStore = useAppStore();
+  const chatStore = useChatStore();
+  const emit = defineEmits(['reload']);
+  const message = useMessage();
+  const fileList = ref<any>([]);
+
+  const [modalRegister, { openModal: openModal, closeModal: closeModal }] = useModal({
+    title: '新增/编辑',
+    closable: true,
+    maskClosable: false,
+    showCloseBtn: false,
+    showSubBtn: false,
+  });
+  const [register, { setFieldsValue, getFieldsValue }] = useForm({
+    gridProps: { cols: 1 },
+    labelWidth: 120,
+    layout: 'horizontal',
+    submitButtonText: '提交',
+    schemas: formSchemas,
+  });
+
+  async function show(id: string) {
+    openModal();
+    await nextTick();
+    if (id) {
+      const data = await getById(id);
+      setFieldsValue({ ...data });
+      if (!isNullOrWhitespace(data.cover)) {
+        fileList.value = [
+          {
+            id: '1',
+            status: 'finished',
+            url: data.cover,
+          },
+        ];
+      }
+    } else {
+    }
+  }
+
+  async function handleSubmit(values: any) {
+    if (values !== false) {
+      closeModal();
+      if (isNullOrWhitespace(values.id)) {
+        await add(values);
+        emit('reload');
+        message.success('新增成功');
+      } else {
+        await update(values);
+        emit('reload');
+        message.success('修改成功');
+      }
+    } else {
+      message.error('请完善表单');
+    }
+  }
+
+  const handleImport = ({ file, onFinish, onError, onProgress }: UploadCustomRequestOptions) => {
+    uploadApi(
+      {
+        file: file.file,
+      },
+      (progressEvent) => {
+        onProgress({
+          percent: Math.round((progressEvent.loaded * 100) / Number(progressEvent.total)),
+        });
+      }
+    )
+      .then((res) => {
+        setFieldsValue({ ...getFieldsValue, cover: res.url });
+        message.success('上传成功，文档解析中...');
+        onFinish();
+      })
+      .catch((err) => {
+        console.error(err);
+        message.error('上传失败');
+        onError();
+      });
+  };
+  async function onSaveModel(val) {
+    appStore.modelId = val.id;
+    chatStore.modelId = val.id;
+    setFieldsValue({ ...getFieldsValue, modelId: val.id });
+  }
+
+  defineExpose({ show });
+</script>
+
+<template>
+  <basicModal style="width: 45%" @register="modalRegister">
+    <BasicForm class="mt-5" @register="register" @submit="handleSubmit">
+      <template #modelIdSlot="{ model, field }">
+        <ModelSelect :id="model[field]" @load="onSaveModel" @update="onSaveModel" />
+      </template>
+      <template #coverSlot>
+        <n-upload
+          :custom-request="handleImport"
+          accept=".jpg,.jpeg,.png,.gif,.bmp,.webp"
+          directory-dnd
+          list-type="image-card"
+        />
+      </template>
+    </BasicForm>
+  </basicModal>
+</template>
+
+<style lang="less" scoped></style>

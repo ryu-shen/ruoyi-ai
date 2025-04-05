@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>ruoyi-ai</artifactId>
+        <groupId>org.dromara</groupId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>ruoyi-modules</artifactId>
+    <packaging>pom</packaging>
+
+    <description>
+        ruoyi-modules 业务模块
+    </description>
+
+    <modules>
+        <module>ruoyi-demo</module>
+        <module>ruoyi-generator</module>
+        <module>ruoyi-job</module>
+        <module>ruoyi-system</module>
+        <module>ruoyi-system-config</module>
+        <module>ruoyi-system-oss</module>
+        <module>ruoyi-workflow</module>
+        <module>ruoyi-langchain</module>
+    </modules>
+
+</project>

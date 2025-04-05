@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.dromara.langchain.upms.mapper.AgiSysUserRoleMapper">
+
+    <select id="getUserListByRoleId" resultType="org.dromara.langchain.upms.domain.AgiSysUser">
+        SELECT `user`.*
+        FROM agi_sys_user `user`,
+             agi_sys_user_role sur,
+             agi_sys_role `role`
+        WHERE `user`.id = sur.user_id
+          AND sur.role_id = `role`.id
+          AND `role`.id = #{roleId}
+    </select>
+
+    <select id="getRoleListByUserId" resultType="org.dromara.langchain.upms.domain.AgiSysRole">
+        SELECT `role`.*
+        FROM agi_sys_user `user`,
+             agi_sys_user_role sur,
+             agi_sys_role `role`
+        WHERE `user`.id = sur.user_id
+          AND sur.role_id = `role`.id
+          AND `user`.id = #{userId}
+    </select>
+</mapper>

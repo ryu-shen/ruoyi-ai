@@ -1,0 +1,71 @@
+
+package org.dromara.langchain.system.service.impl;
+
+import java.util.Date;
+
+import org.dromara.langchain.system.config.SpringFileStorageProperties;
+import org.dromara.langchain.system.domain.AgiSysOss;
+import org.dromara.langchain.system.mapper.AgiSysOssMapper;
+import org.dromara.langchain.system.service.AgiSysOssService;
+import org.dromara.x.file.storage.core.FileInfo;
+import org.dromara.x.file.storage.core.FileStorageService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.DateUtil;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class AgiSysOssServiceImpl extends ServiceImpl<AgiSysOssMapper, AgiSysOss> implements AgiSysOssService {
+
+	private final FileStorageService fileStorageService;
+
+	@Autowired
+	private SpringFileStorageProperties properties;
+
+	@Override
+	public AgiSysOss upload(MultipartFile file, String userId) {
+		log.info(">>>>>>>>>>>>>> OSS文件上传开始： {}", file.getOriginalFilename());
+		FileInfo info = fileStorageService.of(file).setPath(DateUtil.format(new Date(), DatePattern.PURE_DATE_PATTERN))
+				.upload();
+		log.info(">>>>>>>>>>>>>> OSS文件上传结束： {} - {}", info.getFilename(), info.getUrl());
+
+		// 本地上传文件返回访问路径不正确，修改
+//		if ("local".equalsIgnoreCase(info.getPlatform())) {
+//			String pathUrl = URLUtil.getPath(info.getUrl());
+//			URL allUrl = URLUtil.toUrlForHttp(info.getUrl());
+//			String hostPortUrl = allUrl.getProtocol() + "://" + allUrl.getHost() + ":" + allUrl.getPort();
+//
+//			String pathPattern = null;
+//			for (SpringFileStorageProperties.SpringLocalConfig local : properties.getLocal()) {
+//				String[] pathPatterns = local.getPathPatterns();
+//				if (pathPatterns != null && pathPatterns.length == 1) {
+//					pathPattern = pathPatterns[0];
+//				}
+//			}
+//			for (SpringFileStorageProperties.SpringLocalPlusConfig local : properties.getLocalPlus()) {
+//				String[] pathPatterns = local.getPathPatterns();
+//				if (pathPatterns != null && pathPatterns.length == 1) {
+//					pathPattern = pathPatterns[0];
+//				}
+//			}
+//			pathPattern = StrUtil.removeAll(pathPattern, "/**");
+//			String finalUrl = hostPortUrl + pathPattern + pathUrl;
+//			info.setUrl(finalUrl);
+//		}
+
+		AgiSysOss oss = BeanUtil.copyProperties(info, AgiSysOss.class);
+		oss.setOssId(info.getId());
+		oss.setUserId(userId);
+		this.save(oss);
+		return oss;
+	}
+}
