@@ -1,8 +1,12 @@
 package org.dromara.langchain.platform.service.impl;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import dev.langchain4j.data.document.DocumentParser;
+import org.dromara.common.oss.core.OssClient;
+import org.dromara.common.oss.factory.OssFactory;
 import org.dromara.langchain.common.domain.dto.ChatReq;
 import org.dromara.langchain.common.domain.dto.EmbeddingR;
 import org.dromara.langchain.platform.domain.constant.EmbedConst;
@@ -47,11 +51,15 @@ public class AgiEmbeddingServiceImpl implements AgiEmbeddingService {
 	@Override
 	public List<EmbeddingR> embeddingDocs(ChatReq req) {
 		log.info(">>>>>>>>>>>>>> Docs文档向量解析开始，KnowledgeId={}, DocsName={}", req.getKnowledgeId(), req.getDocsName());
-		Document document = UrlDocumentLoader.load(req.getUrl(), new ApacheTikaDocumentParser());
-		document.metadata().put(EmbedConst.KNOWLEDGE, req.getKnowledgeId()).put(EmbedConst.FILENAME, req.getDocsName());
+//		Document document = UrlDocumentLoader.load(req.getUrl(), new ApacheTikaDocumentParser());
+//		document.metadata().put(EmbedConst.KNOWLEDGE, req.getKnowledgeId()).put(EmbedConst.FILENAME, req.getDocsName());
+        OssClient storage = OssFactory.instance();
 
 		List<EmbeddingR> list = new ArrayList<>();
 		try {
+            InputStream inputStream=storage.getObjectContent(req.getUrl());
+            DocumentParser parser=new ApacheTikaDocumentParser();
+            Document document = parser.parse(inputStream);
 			DocumentSplitter splitter = EmbeddingProvider.splitter();
 			List<TextSegment> segments = splitter.split(document);
 
